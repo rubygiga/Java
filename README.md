@@ -1,91 +1,200 @@
-# Java
-
-
-
-import java.awt.Container;
-import java.awt.GridLayout;
-import java.awt.HeadlessException;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
+# Java  2048
 import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 
+import java.awt.BorderLayout;
 
+public class Win2048 {
 
-public class play extends JFrame implements Runnable {
+	private JFrame frame;
+	JButton[][] jb = new JButton[4][4];
+	int[][] cells = new int[4][4];
+	int emptyCells = 4*4;
+	Random ran = new Random();
 	
-	private ButtonHandler bh = new ButtonHandler();
-	private JMenuBar jmb;
-	private final int ROW = 4 ;
-	private final int COL = 4;
-	private final int LOOK_SEC = 5 ; //設定一開始可看幾秒
-	private final int ADD = 100,DECR=100; //得分100扣分100
-	private final int SEC = 1; //設定翻開的排不相同時間格秒數會蓋回去
-	private int imgH = 100, imgW=100 ,SCORE =0 ;
-
-	private JMenu game = new JMenu("Game"),about =new JMenu("關於");
-	private JMenuItem [] gm = new JMenuItem[3];  //遊戲
-	private JMenuItem [] About = new JMenuItem[2]; //關於
-	private JButton [] ImgButton = new JButton[ROW*COL]; //按鈕
-	private ImageIcon [] img = new ImageIcon[ROW*COL]; //存放圖物件
-
-	private JPanel jp = new JPanel(new GridLayout (4,4,0,0));
-	private JLabel jl = new JLabel("Score:0");
-
-	private int[]m; //存放每次重新完的圖片順序
-	private int []TwoImg = {-1,-1}; //紀錄目前翻開的兩張圖編號
-	private int[] ButtonIndex = {-1,-1}; //紀錄被翻開兩張圖的按鈕位置
-	private boolean isChange = false ; //用來切換存放兩張圖順序
-	private boolean isStart =false; //是否開始
-	private boolean[] imgShow = new boolean[8]; //紀錄以配對成功過的圖
-	private boolean[]ButtonBown = new boolean[16]; //紀錄備案過的按鈕
-
-
-
-
-
-
-	public play() throws HeadlessException {
-		super("MemoryCard");
-		Container c = getContentPane();
-		c = this.getContentPane();
-		jmb = new JMenuBar();
-		this.setJMenuBar(jmb); //加入工具列
-		
-		//初始化所有按鈕圖，不可按
-		for(int i=0 ; i <img.length ; i++);
-		{
-			img[i] = new ImageIcon(getClass().getResource("cardimage/00.jpg));
-			imgButton[i] = new JButton(img[i]);
-			imgButton[i].addActionListen(bh);
-			jp.add(imgButton[i]);
-			jp.add(jl);
-			
-		}
-			c.add(jp)
-				
-	}
-
-
-
-	}
-
-
-
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-
-	}
-
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		
+		Win2048 window = new Win2048();
+		window.frame.setVisible(true);
+	}
 
+	public Win2048() {
+		initialize();
+	}
+
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void initialize() {
+		frame = new JFrame();
+		frame.setTitle("2048");
+		frame.setResizable(false);
+		frame.setBounds(100, 100, 450, 300);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(new BorderLayout(0, 0));
+		
+		JPanel center = new JPanel();
+		frame.getContentPane().add(center, BorderLayout.CENTER);
+		GridLayout gl_center = new GridLayout(4, 4);
+		center.setLayout(gl_center);
+		
+		
+		for(int i = 0; i < 4; i++){
+			for(int j=0; j< 4; j++){
+				jb[i][j] = new JButton();
+				center.add(jb[i][j]);
+				jb[i][j].setEnabled(false);
+				cells[i][j] = 0;
+			}
+		}
+	
+		JButton btnNewButton = new JButton("^");
+		btnNewButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				shiftUp();
+			}
+		});
+	
+		frame.getContentPane().add(btnNewButton, BorderLayout.NORTH);
+		
+		JButton btnNewButton_3 = new JButton("v");
+		btnNewButton_3.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				shiftDown();
+			}
+		});
+		
+		frame.getContentPane().add(btnNewButton_3, BorderLayout.SOUTH);
+		
+		JButton btnNewButton_1 = new JButton("<");
+		btnNewButton_1.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				shiftLeft();
+			}
+		});
+		frame.getContentPane().add(btnNewButton_1, BorderLayout.WEST);
+		
+		JButton btnNewButton_2 = new JButton(">");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				shiftRight();
+			}
+		});
+		frame.getContentPane().add(btnNewButton_2, BorderLayout.EAST);
+		
+		JMenuBar menuBar = new JMenuBar();
+		frame.setJMenuBar(menuBar);
+		
+		JMenu mnNewgame = new JMenu("NewGame");
+		mnNewgame.addMenuListener(new MenuListener() {
+			public void menuCanceled(MenuEvent arg0) {
+			}
+			public void menuDeselected(MenuEvent arg0) {
+			}
+			public void menuSelected(MenuEvent arg0) {
+				emptyCells = 0;
+				for(int i = 0; i < 4; i++){
+					for(int j=0; j< 4; j++){
+						cells[i][j] = 0;
+					}
+				}
+				playOnce();
+			}
+		});
+		mnNewgame.setMnemonic('N');
+		menuBar.add(mnNewgame);
+		
+		JMenu mnExit = new JMenu("Exit");
+		mnExit.addMenuListener(new MenuListener() {
+			public void menuCanceled(MenuEvent e) {
+			}
+			public void menuDeselected(MenuEvent e) {
+			}
+			public void menuSelected(MenuEvent e) {
+				System.exit(0);
+			}
+		});
+		
+		mnExit.setMnemonic('E');
+		menuBar.add(mnExit);
+		
+		playOnce();
+	}
+	
+	private void playOnce() {
+		this.genCells();
+		this.mapCells();		
+		this.calcEmpty();
+	}
+
+	private void calcEmpty() {
+		emptyCells = 0;
+		for(int i = 0; i < 4; i++){
+			for(int j=0; j< 4; j++){
+				if (cells[i][j] == 0) 
+					this.emptyCells++;
+			}
+		}
+	}
+
+	private void genCells(){
+		int max = (int) Math.sqrt(16 - emptyCells);
+		for(int i = 0; i < 4; i++){
+			for(int j=0; j< 4; j++){
+				if ((cells[i][j] == 0) &&(ran.nextInt(10)<=max))
+					cells[i][j] = 2;
+			}
+		}
+	}
+	private void mapCells(){
+		for(int i = 0; i < 4; i++){
+			for(int j=0; j< 4; j++){
+				jb[i][j].setText(Integer.toString(cells[i][j]));
+			}
+		}
+	}
+	protected void shiftDown() {
+		for(int i = 0; i < 3; i++){
+			for(int j=0; j< 4; j++){
+				cells[3][j] += cells[i][j];
+				cells[i][j] = 0;
+			}
+		}
+		playOnce();		
+	}
+
+	protected void shiftRight() {
+		for(int i = 0; i < 4; i++){
+			for(int j=0; j< 3; j++){
+				cells[i][3] += cells[i][j];
+				cells[i][j] = 0;
+			}
+		}
+		playOnce();			
+	}
+
+	protected void shiftUp() {
+		for(int i = 1; i < 4; i++){
+			for(int j=0; j< 4; j++){
+				cells[0][j] += cells[i][j];
+				cells[i][j] = 0;
+			}
+		}
+		playOnce();	
+		
+	}
+
+	protected void shiftLeft() {
+		for(int i = 0; i < 4; i++){
+			for(int j=1; j< 4; j++){
+				cells[i][0] += cells[i][j];
+				cells[i][j] = 0;
+			}
+		}
+		playOnce();	
 	}
 
 }
